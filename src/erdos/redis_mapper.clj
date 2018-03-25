@@ -1,7 +1,5 @@
 (ns erdos.redis-mapper
-  (:require [taoensso.carmine :as car]
-            [taoensso.timbre :as log]
-            [socql.common :refer (config)]))
+  (:require [taoensso.carmine :as car]))
 
 (def ^:dynamic *redis-config*)
 
