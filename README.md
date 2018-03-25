@@ -74,6 +74,13 @@ To return a sequence of all the red cars just type:
 (get-car :color "red")
 ```
 
+# TODO:
+
+- FIX: store id in meta value.
+- FEAT: unit tests for most simple cases.
+- FIX: get-first-* fn should fetch only one item.
+- FIX: only store values in index when key is not missing. (!!)
+
 ## License
 
 Copyright © 2018 Janos Erdos
