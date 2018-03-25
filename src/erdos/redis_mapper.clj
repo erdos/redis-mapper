@@ -79,17 +79,21 @@
        (defn ~ctor! [& args#]
          (persist! (apply ~ctor args#))))))
 
-(defn emit-get [model-name opts]
-  (let [t (name model-name)]
-    `(defn ~(symbol (str "get-" (.toLowerCase t)))
-       ([id#] (wcar* (car/get (path-by-id ~t id#))))
-       ([idx# val#]
-        (assert (contains? ~(set (:indices opts)) idx#))
-        (let [ks# (wcar* (car/smembers (path-by-idx ~t idx# val#)))]
-          ;; TODO:imeplementalhatjuk ezt a SINTER operatorral is
-          (wcar* :as-pipeline
-                 (doall (for [k# ks#]
-                          (car/get (path-by-id ~t k#))))))))))
+(defn- emit-get [model-name opts]
+  (let [t                (name model-name)
+        get-fn-sym       (symbol (str "get-" (.toLowerCase t)))
+        get-first-fn-sym (symbol (str "get-first-" (.toLowerCase t)))]
+    `(do (defn ~get-fn-sym
+           ([id#] (wcar* (car/get (path-by-id ~t id#))))
+           ([idx# val#]
+            (assert (contains? ~(set (:indices opts)) idx#))
+            (let [ks# (wcar* (car/smembers (path-by-idx ~t idx# val#)))]
+              ;; TODO:imeplementalhatjuk ezt a SINTER operatorral is
+              (wcar* :as-pipeline
+                     (doall (for [k# ks#]
+                              (car/get (path-by-id ~t k#))))))))
+         (defn ~get-first-fn-sym
+           ([a# b#] (first (~get-fn-sym a# b#)))))))
 
 (defn emit-indexes [model-name opts]
   `(defmethod get-indexes ~(->kw model-name) [_#] ~(:indices opts)))
