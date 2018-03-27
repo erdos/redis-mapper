@@ -10,10 +10,9 @@
   (cond
     (string? x) x
     (integer? x) x
-    (map? x) (:id x)
+    (map? x)     (-> x meta :id)
     :else
     (assert false "No id for obj")))
-
 
 (defmulti validate! (comp :table meta))
 
@@ -28,35 +27,39 @@
 (defmacro path-by-idx [table k v]
   `(str (name ~table) "/" (name ~k) ":" ~v))
 
-(def get-id :id)
+(def get-id (comp :id meta))
+(def ^:private get-table (comp :table meta))
 
 (defmulti get-indexes identity)
 
 (defn persist!-unsafe [obj]
-  (let [t (-> obj meta :table name)]
+  (let [t       (get-table obj)
+        indexes (get-indexes t)]
+    (assert t "It is not an entity type!")
     (if-let [id (get-id obj)]
       ;; existing object has id
       (let [access    (path-by-id t id)
             [old ok?] (wcar* (car/get access) (car/set access obj))]
         (assert (= "OK" ok?))
-        (wcar* (doseq [idx (get-indexes (:table (meta obj)))
-                       :let [o (old idx)
-                             n (obj idx)]
-                       :when (not= o n)]
-                 (car/spop (path-by-idx t idx o) id)
-                 (car/sadd (path-by-idx t idx n) id)))
+        (wcar* (doseq [idx indexes
+                       :let [old-val (old idx)
+                             new-val (obj idx)]
+                       :when (not= old-val new-val)]
+                 (car/srem (path-by-idx t idx old-val) id)
+                 (car/sadd (path-by-idx t idx new-val) id)))
+        ;; TODO: here should merge :original to meta.
         obj)
       ;; new object needs a new id
-      (let [id (wcar* (car/incr (str t "/meta:max_id")))
-            obj (assoc obj :id id)]
+      (let [id  (wcar* (car/incr (str t "/meta:max_id")))
+            obj (vary-meta obj assoc :id id)]
         (wcar* (car/set (path-by-id t id) obj)
-               (doseq [idx (get-indexes (:table (meta obj)))]
+               (doseq [idx indexes]
                  (car/sadd (path-by-idx t idx (obj idx)) id)))
         obj))))
 
 (defn persist! [obj]
   (assert (map? obj))
-  (assert (-> obj meta :table))
+  (assert (get-table obj))
   (persist!-unsafe (validate! obj)))
 
 (defn- ->kw [x] (keyword (name x)))
@@ -110,12 +113,12 @@
 ;; todo: set history object on a per object basis
 (defn revert [obj]
   (assert (map? obj))
-  (assert (-> obj meta :table))
+  (assert (get-table obj))
   (assert (-> obj meta :original))
-  (with-meta (assoc (-> obj meta :original) :id (:id obj))
-    {:table (-> obj meta :table)
+  (with-meta (-> obj meta :original)
+    {:table    (get-table obj)
+     :id       (get-id obj)
      :original (-> obj meta :original)}))
-
 
 (defmacro defmodel [model-name & {:as opts}]
   (assert (symbol? model-name))
