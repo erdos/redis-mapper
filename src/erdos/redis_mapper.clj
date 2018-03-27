@@ -7,12 +7,10 @@
 (defn clear-redis-config! [] (alter-var-root #'*redis-config* (constantly nil)))
 
 (defn ->id [x]
-  (cond
-    (string? x) x
-    (integer? x) x
-    (map? x)     (-> x meta :id)
-    :else
-    (assert false "No id for obj")))
+  (cond (string? x)  (str x)
+        (integer? x) (str x)
+        (map? x)     (some-> x meta :id str)
+        :else        (assert false "No id for obj")))
 
 (defmulti validate! (comp :table meta))
 
@@ -95,9 +93,9 @@
             (assert (contains? ~(set (:indices opts)) idx#))
             (let [ks# (wcar* (car/smembers (path-by-idx ~t idx# val#)))]
               ;; TODO:imeplementalhatjuk ezt a SINTER operatorral is
-              (wcar* :as-pipeline
-                     (doall (for [k# ks#]
-                              (car/get (path-by-id ~t k#))))))))
+              (map (fn [id# x#] (with-meta x# {:id id# :table ~(->kw model-name) :original x#}))
+                   ks# (wcar* :as-pipeline
+                              (doall (for [k# ks#] (car/get (path-by-id ~t k#)))))))))
          (defn ~get-first-fn-sym
            ([a# b#] (first (~get-fn-sym a# b#)))))))
 

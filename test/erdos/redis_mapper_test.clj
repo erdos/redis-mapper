@@ -44,6 +44,15 @@
       (is (not= original-user changed-user))
       (is (= (->id original-user) (->id changed-user))))))
 
+(deftest test-get
+  (testing "i receive the same entity"
+    (let [user (->user! {:user-name "Bela" :user-uuid 1234})
+          id   (->id user)]
+      (is (= [user] (get-user :user-uuid 1234)))
+      (is (= id (->id (get-first-user :user-uuid 1234))))
+      (is (= user (get-user id)))
+      (is (= id (->id (get-user id)))))))
+
 (deftest test-indices
   (testing "Can lookup with index"
     (let [test-user (->user! {:user-name "John" :user-uuid 13})]
