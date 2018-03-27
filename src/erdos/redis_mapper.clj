@@ -88,7 +88,8 @@
         get-fn-sym       (symbol (str "get-" (.toLowerCase t)))
         get-first-fn-sym (symbol (str "get-first-" (.toLowerCase t)))]
     `(do (defn ~get-fn-sym
-           ([id#] (wcar* (car/get (path-by-id ~t id#))))
+           ([id#] (when-let [*# (wcar* (car/get (path-by-id ~t id#)))]
+                    (with-meta *# {:id id# :table ~(->kw model-name) :original *#})))
            ([idx# val#]
             (assert (contains? ~(set (:indices opts)) idx#))
             (let [ks# (wcar* (car/smembers (path-by-idx ~t idx# val#)))]
