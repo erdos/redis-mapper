@@ -10,6 +10,7 @@
   (cond (string? x)  (str x)
         (integer? x) (str x)
         (map? x)     (some-> x meta :id str)
+        (nil? x)     nil
         :else        (assert false "No id for obj")))
 
 (defn ->id! [x]
