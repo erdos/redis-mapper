@@ -45,15 +45,18 @@
                        :let [old-val (old idx)
                              new-val (obj idx)]
                        :when (not= old-val new-val)]
-                 (car/srem (path-by-idx t idx old-val) id)
-                 (car/sadd (path-by-idx t idx new-val) id)))
+                 (when (contains? old idx)
+                   (car/srem (path-by-idx t idx old-val) id))
+                 (when (contains? obj idx)
+                   (car/sadd (path-by-idx t idx new-val) id))))
         ;; TODO: here should merge :original to meta.
         obj)
       ;; new object needs a new id
       (let [id  (wcar* (car/incr (str t "/meta:max_id")))
             obj (vary-meta obj assoc :id id)]
         (wcar* (car/set (path-by-id t id) obj)
-               (doseq [idx indexes]
+               (doseq [idx indexes
+                       :when (contains? obj idx)]
                  (car/sadd (path-by-idx t idx (obj idx)) id)))
         obj))))
 

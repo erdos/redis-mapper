@@ -53,15 +53,25 @@
         (is (empty? (get-first-user :user-uuid 13)) "A regi index alatt toroltuk!")
         (is (empty? (get-user :user-uuid 13)) "A regi index alatt toroltuk!")
         (is (= test-user (get-first-user :user-uuid 14)) "Az uj index alatt elerheto!"))))
+
   (testing "Can not lookup without index"
     (is (thrown? AssertionError (get-user :nonexisting-index 34))))
 
   (testing "Can lookup null values with index"
+    (let [test-user (->user! {:user-name "John" :user-uuid nil})]
+      (is (contains? (set (get-user :user-uuid nil)) test-user))
+      (let [test-user (persist! (assoc test-user :user-uuid "ALABAMA"))]
+        (is (not (contains? (set (get-user :user-uuid nil)) test-user)))
+        (is (= test-user (get-first-user :user-uuid "ALABAMA")))
+        (let [test-user (persist! (dissoc test-user :user-uuid))]
+          (is (not (contains? (set (get-user :user-uuid "ALABAMA")) test-user)))
+          (is (not (contains? (set (get-user :user-uuid nil)) test-user)))))))
 
-    )
   (testing "Can not lookup missing values with index"
-
-    ))
+    (let [test-user (->user! :user-name "Malac")]
+      (is (not (contains? (set (get-user :user-uuid nil)) test-user))))
+    (let [test-user (->user! :user-name "Maki" :user-uuid nil)]
+      (is (contains? (set (get-user :user-uuid nil)) test-user)))))
 
 ;; (->id (->user! user-1))
 
