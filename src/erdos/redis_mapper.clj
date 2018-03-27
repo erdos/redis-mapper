@@ -12,6 +12,15 @@
         (map? x)     (some-> x meta :id str)
         :else        (assert false "No id for obj")))
 
+(defn ->id! [x]
+  (cond (string? x) (str x)
+        (map? x)
+        (let [id (:id (meta x))]
+          (assert (string? id))
+          id)
+        :otherwise
+        (assert false (str "Unexpected id value: " (pr-str x)))))
+
 (defmulti validate! (comp :table meta))
 
 (defmacro wcar* [& body]
@@ -88,15 +97,17 @@
         get-fn-sym       (symbol (str "get-" (.toLowerCase t)))
         get-first-fn-sym (symbol (str "get-first-" (.toLowerCase t)))]
     `(do (defn ~get-fn-sym
-           ([id#] (when-let [*# (wcar* (car/get (path-by-id ~t id#)))]
-                    (with-meta *# {:id id# :table ~(->kw model-name) :original *#})))
+           ([id#] (let [id# (->id! id#)]
+                    (when-let [*# (wcar* (car/get (path-by-id ~t id#)))]
+                      (with-meta *# {:id id# :table ~(->kw model-name) :original *#}))))
            ([idx# val#]
             (assert (contains? ~(set (:indices opts)) idx#))
             (let [ks# (wcar* (car/smembers (path-by-idx ~t idx# val#)))]
               ;; TODO:imeplementalhatjuk ezt a SINTER operatorral is
-              (map (fn [id# x#] (with-meta x# {:id id# :table ~(->kw model-name) :original x#}))
+              (map (fn [id# x#] (with-meta x# {:id (->id id#) :table ~(->kw model-name) :original x#}))
                    ks# (wcar* :as-pipeline
                               (doall (for [k# ks#] (car/get (path-by-id ~t k#)))))))))
+         ;; TODO: inline the previous one.
          (defn ~get-first-fn-sym
            ([a# b#] (first (~get-fn-sym a# b#)))))))
 
