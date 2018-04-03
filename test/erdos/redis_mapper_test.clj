@@ -82,6 +82,15 @@
     (let [test-user (->user! :user-name "Maki" :user-uuid nil)]
       (is (contains? (set (get-user :user-uuid nil)) test-user)))))
 
+#_
+(deftest test-multi-indices
+  (testing "Can persist then lookup"
+    (let [test-user (->user! {:user-name ["Peter" "Jane" "Mario"]})]
+      (is (some? (->id test-user)) "User has been saved")
+      (is (= 1 (count (get-user :user-name "Peter"))))
+      (is (= 2 (count (get-user :user-name ["Peter" "Jane"]))))
+      (is (= 3 (count (get-user :user-name ["Jane" "Peter" "Mario"])))))))
+
 ;; (->id (->user! user-1))
 
 ; (test-entity-creation)
