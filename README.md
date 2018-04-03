@@ -25,7 +25,20 @@ To use the library from a Clojure namespace, first, require the library.
 (require '[erdos.redis-mapper :refer :all])
 ```
 
-Second, define a schema and a validator function for your model. You can use **prismatic schema** for this purpose.
+## Overview
+
+- `(defmodel car :indices [:color :brand] :validator val-fn)` - creates a new model called *car* with indices on keys `:color` and `:brand` and validator function `val-fn`.
+- `(persist! x)` - persists an entity to db. Returns updated entity.
+- `(->car c)` - given a model called *car* and the data in *c* created a new *car* instance. Calls validator function first.
+- `(->car! c)` - given a model called *car* and the data in *c* creates a new *car* instance and persistst, too.
+- `(get-car ID)` - returns a *car* instance with the given identifier.
+- `(get-car :color "red")` - returns a seq of *red* cars.
+- `(get-first-car :color "red")` - returns one car instance with *red* color property.
+- `(->id car-instance)` - returns the identifier of a *car* instance.
+
+## Examples
+
+You can define a schema and a validator function for your models. For example, you can use **prismatic schema** for this purpose.
 
 ```
 (def User
@@ -46,6 +59,7 @@ This generates the following functions:
 - `->user` for creating new user instances and validating it.
 - `->user!` for creating new user instances, validate then persist.
 - `get-user` to query user instances by id or indices.
+- `get-first-user` to query user instances by some index.
 
 ### Creating and persisting
 
@@ -115,6 +129,7 @@ If the key is present but has a `nil` value then the `nil` value will be indexed
 (count (get-car :color nil)) ;; == 1 because only the first one is indexed
 ```
 
+Use `(get-first-car :color "red")` to find only one *car* entity with the *color* value *red*.
 
 # Development
 
