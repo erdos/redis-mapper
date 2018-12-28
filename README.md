@@ -4,20 +4,7 @@ A data mapper library for Redis + Clojure.
 
 ## Usage
 
-First of all, clone the repo and install the library as a maven artifact.
-
-```
-$ git clone https://github.com/erdos/erdos.redis-mapper.git && cd erdos.redis-mapper && lein install
-```
-
-You need to import it as a dependency to use from Clojure projects.
-If you use Leiningen, add the following to the `:dependencies` section of your `project.clj` file.
-
-``` clojure
-:depnendencies [...
-                [erdos.redis-mapper "0.1.0-SNAPSHOT"]
-                ...]
-```
+Add the dependency to your `project.clj` file: `[io.github.erdos/redis-mapper "0.1.0"]`
 
 To use the library from a Clojure namespace, first, require the library.
 
@@ -35,6 +22,8 @@ To use the library from a Clojure namespace, first, require the library.
 - `(get-car :color "red")` - returns a seq of *red* cars.
 - `(get-first-car :color "red")` - returns one car instance with *red* color property.
 - `(->id car-instance)` - returns the identifier of a *car* instance.
+
+The entities are simple persistent maps so you can call the usual functions on them: `assoc`, `assoc-in`, `get`, `get-in`, `update`, `update-in`, `merge`, `into`, etc. Call `persist!` to save the changes to the database. Call `revert` to revert modifications and return the original entity from the db.
 
 ## Examples
 
